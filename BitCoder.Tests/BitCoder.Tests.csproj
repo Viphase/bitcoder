@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Консольный набор проверок без внешних пакетов.
+       Запуск командой «dotnet run» с указанием этого проекта; код возврата 1, если что-то не сошлось. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BitCoder.Core\BitCoder.Core.csproj" />
+  </ItemGroup>
+</Project>

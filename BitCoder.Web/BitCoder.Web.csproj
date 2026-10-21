@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Веб-часть: контроллеры, представления Razor, стили.
+       Все расчёты берёт из BitCoder.Core. Обратной ссылки (Core -> Web) нет. -->
+  <ItemGroup>
+    <ProjectReference Include="..\BitCoder.Core\BitCoder.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,52 @@
+@inject IConfiguration Config
+@{
+    string author = Config["Site:Author"] ?? "";
+    string controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] — Кодировщик</title>
+    <meta name="description" content="Учебный сайт: как кодируют и расшифровывают сообщения равномерным двоичным кодом." />
+    <link rel="stylesheet" href="~/css/fonts.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip" href="#main">Перейти к содержимому</a>
+
+    <header class="topbar">
+        <a class="brand" asp-controller="Home" asp-action="Index" aria-label="Кодировщик — на главную">
+            <span class="brand-bits" aria-hidden="true">
+                <span class="bit b0">0</span><span class="bit b1">1</span><span class="bit b1">1</span><span class="bit b0">0</span>
+            </span>
+            <span class="brand-name">Кодировщик</span>
+        </a>
+        <nav class="mainnav" aria-label="Разделы сайта">
+            <a asp-controller="Home" asp-action="Index" aria-current="@(controller == "Home" ? "page" : null)">Главная</a>
+            <a asp-controller="Lesson" asp-action="Index" aria-current="@(controller == "Lesson" ? "page" : null)">Разбор</a>
+            <a asp-controller="Practice" asp-action="Index" aria-current="@(controller == "Practice" ? "page" : null)">Задача</a>
+        </nav>
+    </header>
+
+    <main id="main" class="page">
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <p>
+            Учебный проект «Объясни задачу», тема 8, вариант А: равномерное кодирование.
+            @if (string.IsNullOrWhiteSpace(author))
+            {
+                <span>Автор: укажите имя в <code>appsettings.json</code>.</span>
+            }
+            else
+            {
+                <span>Автор: @author.</span>
+            }
+            <a asp-controller="Home" asp-action="Index" asp-fragment="sources">Источники</a>
+        </p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,8 @@
+@model string
+@* Группа бит: каждый бит — отдельная «клетка». Цвет дублируется цифрой, чтобы не зависеть от цвета. *@
+<span class="bits" role="img" aria-label="@("код " + Model)">
+    @foreach (char c in Model)
+    {
+        <span class="@(c == '1' ? "bit b1" : "bit b0")" aria-hidden="true">@c</span>
+    }
+</span>

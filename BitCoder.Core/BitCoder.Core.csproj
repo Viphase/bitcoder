@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Библиотека расчётов: НЕ ссылается на ASP.NET, ничего не знает про веб. -->
+</Project>

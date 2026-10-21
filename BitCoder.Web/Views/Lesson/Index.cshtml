@@ -1,0 +1,248 @@
+@model LessonViewModel
+@{
+    ViewData["Title"] = "Разбор";
+}
+
+<h1 class="sr-only">Пошаговый разбор</h1>
+
+<div class="sheet databar">
+    <partial name="_DataForm" model="Model.Form" />
+</div>
+
+@if (Model.Error is not null)
+{
+    <div class="pen pen-bad error-box" role="alert">
+        <p class="pen-main">Разбор не построен.</p>
+        <p>@Model.Error</p>
+        <p class="pen-actions">
+            <a class="btn btn-ghost" href="@Url.LessonUrl(Presets.Main)">Открыть основной пример</a>
+        </p>
+    </div>
+}
+else
+{
+    Lesson lesson = Model.Lesson!;
+    Step step = Model.Step!;
+    CodeTable table = lesson.Table;
+    bool encode = lesson.Mode == Mode.Encode;
+    int total = lesson.Steps.Count;
+    int number = Model.StepIndex + 1;
+    int percent = (int)Math.Round(number * 100.0 / total);
+
+    <div class="lesson">
+        <section class="sheet stage" aria-label="Наглядная схема">
+
+            <h2 class="stage-title">Таблица кодов</h2>
+            <ol class="tiles" aria-label="Алфавит и коды">
+                @for (int i = 0; i < table.Count; i++)
+                {
+                    bool current = i == step.HiSymbol;
+                    <li class="@(current ? "tile is-current" : "tile")">
+                        <span class="tile-sym">@table.Symbols[i]</span>
+                        <span class="tile-num">номер @i</span>
+                        @if (i < step.CodesShown)
+                        {
+                            <partial name="_Bits" model="table.Code(i)" />
+                        }
+                        else
+                        {
+                            <span class="tile-empty">кода ещё нет</span>
+                        }
+                        @if (current)
+                        {
+                            <span class="flag">сейчас</span>
+                        }
+                    </li>
+                }
+                @if (step.ShowUnused)
+                {
+                    foreach (string code in table.UnusedCodes())
+                    {
+                        <li class="tile is-free">
+                            <span class="tile-sym">—</span>
+                            <span class="tile-num">без символа</span>
+                            <partial name="_Bits" model="code" />
+                        </li>
+                    }
+                }
+            </ol>
+
+            <h2 class="stage-title">@(encode ? "Сообщение и его код" : "Строка бит и сообщение")</h2>
+
+            @if (!encode && !step.Split)
+            {
+                <div class="rawbits">
+                    <partial name="_Bits" model="lesson.Input" />
+                    <p class="caption">Строка пока не разрезана на группы.</p>
+                </div>
+            }
+            else
+            {
+                <div class="strip" role="list" aria-label="Колонки сообщения">
+                    @for (int j = 0; j < lesson.Pieces.Count; j++)
+                    {
+                        Piece p = lesson.Pieces[j];
+                        bool active = j == step.Active;
+                        bool error = active && step.IsError;
+                        bool shown = j < step.Done || (active && step.Reveal && !p.IsError);
+                        string state = error ? "is-error" : active ? "is-current" : j < step.Done ? "is-done" : "is-pending";
+                        string missing = p.Error switch
+                        {
+                            PieceError.UnknownCode => "нет в таблице",
+                            PieceError.IncompleteGroup => "не хватает бит",
+                            _ => "нет в алфавите",
+                        };
+
+                        <div class="col @state" role="listitem" style="--i:@j">
+                            <div class="top">
+                                @if (encode)
+                                {
+                                    <span class="sym-chip">@p.Symbol</span>
+                                }
+                                else
+                                {
+                                    <partial name="_Bits" model="p.Group" />
+                                }
+                            </div>
+                            <div class="bottom">
+                                @if (shown)
+                                {
+                                    if (encode)
+                                    {
+                                        <partial name="_Bits" model="p.Group" />
+                                    }
+                                    else
+                                    {
+                                        <span class="sym-chip">@p.Symbol</span>
+                                    }
+                                }
+                                else if (error)
+                                {
+                                    <span class="ph ph-error">@missing</span>
+                                }
+                                else if (active)
+                                {
+                                    <span class="ph ph-ask" aria-label="ждёт ответа">?</span>
+                                }
+                                else
+                                {
+                                    <span class="ph" aria-hidden="true">·</span>
+                                }
+                            </div>
+                            @if (error)
+                            {
+                                <span class="flag flag-error">ошибка</span>
+                            }
+                            else if (active)
+                            {
+                                <span class="flag">сейчас</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            <p class="output">
+                <span class="output-label">@(encode ? "Строка бит сейчас:" : "Текст сейчас:")</span>
+                @if (step.Output.Length == 0)
+                {
+                    <span class="output-empty">пока пусто</span>
+                }
+                else
+                {
+                    <code class="output-value">@step.Output</code>
+                }
+            </p>
+        </section>
+
+        <section class="steppanel" aria-label="Объяснение шага" aria-live="polite">
+            <div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="@total" aria-valuenow="@number"
+                 aria-label="Шаг @number из @total" style="--p:@percent%">
+                <span class="progress-fill"></span>
+            </div>
+            <p class="stepno">Шаг @number из @total</p>
+            <h2 class="steptitle">@step.Title</h2>
+
+            <dl class="facts@(step.IsError ? " facts-error" : "")">
+                <div class="fact">
+                    <dt>Что рассматриваем</dt>
+                    <dd>@step.Looking</dd>
+                </div>
+                <div class="fact">
+                    <dt>Что делаем</dt>
+                    <dd>@step.Doing</dd>
+                </div>
+                <div class="fact">
+                    <dt>Значения</dt>
+                    <dd>
+                        <ul class="values">
+                            @foreach (string v in step.Values)
+                            {
+                                <li>@v</li>
+                            }
+                        </ul>
+                    </dd>
+                </div>
+                <div class="fact fact-changed">
+                    <dt>Что изменилось</dt>
+                    <dd>@step.Changed</dd>
+                </div>
+            </dl>
+
+            @if (step.Question is { } q)
+            {
+                <form class="question" method="get" asp-controller="Lesson" asp-action="Index">
+                    <input type="hidden" name="a" value="@table.AlphabetText" />
+                    <input type="hidden" name="mode" value="@ModeCodes.ToCode(lesson.Mode)" />
+                    <input type="hidden" name="in" value="@lesson.Input" />
+                    <input type="hidden" name="step" value="@Model.StepIndex" />
+                    <label for="ans"><span class="q-num">Вопрос @q.Number.</span> @q.Text</label>
+                    <div class="q-row">
+                        <input id="ans" name="ans" value="@Model.QuestionAnswer" placeholder="@q.Placeholder"
+                               autocomplete="off" spellcheck="false" />
+                        <button type="submit" class="btn btn-primary">Проверить</button>
+                    </div>
+                    @if (Model.QuestionResult is { } r)
+                    {
+                        string css = r.Verdict switch
+                        {
+                            Verdict.Correct => "pen pen-ok",
+                            Verdict.Wrong => "pen pen-bad",
+                            _ => "pen pen-warn",
+                        };
+                        <p class="@css" role="status">@r.Message</p>
+                    }
+                </form>
+            }
+
+            <nav class="stepnav" aria-label="Переход по шагам">
+                <a class="btn btn-ghost" href="@Model.FirstUrl">Сначала</a>
+                @if (Model.PrevUrl is not null)
+                {
+                    <a class="btn btn-ghost" href="@Model.PrevUrl" rel="prev">Назад</a>
+                }
+                @if (Model.NextUrl is not null)
+                {
+                    <a class="btn btn-primary" href="@Model.NextUrl" rel="next">Следующий шаг</a>
+                }
+                else
+                {
+                    <span class="btn btn-primary is-disabled" aria-disabled="true">Это последний шаг</span>
+                }
+            </nav>
+
+            @if (Model.NextUrl is null)
+            {
+                <p class="afterwards">
+                    @if (Model.ReverseUrl is not null)
+                    {
+                        <a class="btn btn-ghost" href="@Model.ReverseUrl">@(encode ? "Расшифровать этот результат" : "Закодировать этот текст снова")</a>
+                    }
+                    <a class="btn btn-ghost" asp-controller="Practice" asp-action="Index">Решить задачу</a>
+                </p>
+            }
+
+            <p class="reload-note">Номер шага хранится в адресе страницы: если обновить её, вы останетесь на этом же шаге.</p>
+        </section>
+    </div>
+}

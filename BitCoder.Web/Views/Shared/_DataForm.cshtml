@@ -1,0 +1,28 @@
+@model DataFormModel
+<form class="dataform" method="get" asp-controller="Lesson" asp-action="Index">
+    <div class="field field-alphabet">
+        <label for="a">Алфавит</label>
+        <input id="a" name="a" value="@Model.Alphabet" maxlength="24" autocomplete="off" spellcheck="false" inputmode="text" />
+        <span class="hint">от 4 до 6 разных букв</span>
+    </div>
+
+    <fieldset class="modes">
+        <legend>Что делаем</legend>
+        <label class="mode">
+            <input type="radio" name="mode" value="enc" checked="@(Model.ModeCode == "enc")" />
+            <span>Закодировать сообщение</span>
+        </label>
+        <label class="mode">
+            <input type="radio" name="mode" value="dec" checked="@(Model.ModeCode == "dec")" />
+            <span>Расшифровать строку бит</span>
+        </label>
+    </fieldset>
+
+    <div class="field field-input">
+        <label for="in">Сообщение или строка бит</label>
+        <input id="in" name="in" value="@Model.Input" maxlength="120" autocomplete="off" spellcheck="false" />
+        <span class="hint">для кодирования — буквы алфавита, для расшифровки — нули и единицы; пробелы не мешают</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Показать разбор</button>
+</form>

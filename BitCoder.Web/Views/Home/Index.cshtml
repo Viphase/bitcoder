@@ -1,0 +1,139 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "Кодируем и расшифровываем сообщения";
+    Preset intro = Model.Presets.First(p => p.Kind == PresetKind.Intro);
+    Preset main = Model.Presets.First(p => p.Kind == PresetKind.Main);
+    var specials = Model.Presets.Where(p => p.Kind == PresetKind.Special).ToList();
+    CodeTable demoTable = Model.Demo.Table;
+}
+
+<section class="hero">
+    <div class="hero-text">
+        <h1>Буквы в нулях и единицах</h1>
+        <p class="lead">
+            Разберите по шагам, как сообщение превращается в строку бит и как эту строку читают обратно.
+            И что ломается, когда код оказывается «не тот».
+        </p>
+        <p class="hero-actions">
+            <a class="btn btn-primary" href="@Url.LessonUrl(intro)">Начать с простого примера</a>
+            <a class="btn btn-ghost" asp-controller="Practice" asp-action="Index">Сразу к задаче</a>
+        </p>
+    </div>
+
+    <figure class="sheet hero-demo" aria-label="Пример: слово «@Model.Demo.Input» и его код">
+        <div class="strip hero-strip" role="list">
+            @for (int j = 0; j < Model.Demo.Pieces.Count; j++)
+            {
+                Piece p = Model.Demo.Pieces[j];
+                <div class="col is-done" role="listitem" style="--i:@j">
+                    <div class="top"><span class="sym-chip">@p.Symbol</span></div>
+                    <div class="bottom"><partial name="_Bits" model="p.Group" /></div>
+                </div>
+            }
+        </div>
+        <figcaption>
+            «@Model.Demo.Input» с алфавитом @string.Join(", ", demoTable.Symbols):
+            у каждой буквы код из @Ru.Count(demoTable.Bits, "бита", "бит", "бит") — и вот что получилось: <code>@Model.Demo.Result</code>
+        </figcaption>
+    </figure>
+</section>
+
+<section class="explain-home" aria-labelledby="what">
+    <h2 id="what">Что такое равномерный код</h2>
+    <div class="two-col">
+        <div class="prose">
+            <p>
+                Компьютер хранит всё нулями и единицами. Чтобы записать текст, каждой букве выдают код —
+                группу бит. В <strong>равномерном</strong> коде у всех букв код одной длины <em>k</em>.
+            </p>
+            <p>
+                Поэтому читать такую запись просто: режем строку на группы по <em>k</em> бит и ищем каждую группу в таблице.
+            </p>
+            <p>
+                Длина кода зависит от числа символов <em>N</em>. <em>k</em> бит дают 2<sup><em>k</em></sup> разных кодов,
+                и нужно взять наименьшее <em>k</em>, при котором 2<sup><em>k</em></sup> ≥ <em>N</em>.
+            </p>
+            <p>
+                Бывает, что кодов больше, чем символов. Тогда часть кодов свободна, и если такая группа попадёт
+                в строку, расшифровать её нельзя. Вторая беда — строка, которая не делится на группы нацело.
+            </p>
+        </div>
+
+        <table class="kn" aria-label="Сколько бит нужно для разного числа символов">
+            <caption>Сколько бит нужно на символ</caption>
+            <thead>
+                <tr><th scope="col">Символов N</th><th scope="col">Бит k</th><th scope="col">Кодов 2<sup>k</sup></th><th scope="col">Свободных</th></tr>
+            </thead>
+            <tbody>
+                @for (int n = CodeTable.MinSymbols; n <= CodeTable.MaxSymbols; n++)
+                {
+                    int k = CodeTable.BitsFor(n);
+                    int capacity = 1 << k;
+                    <tr>
+                        <th scope="row">@n</th>
+                        <td>@k</td>
+                        <td>@capacity</td>
+                        <td>@(capacity - n)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section aria-labelledby="examples">
+    <h2 id="examples">Три примера</h2>
+    <ul class="examples">
+        <li class="example">
+            <h3>Вводный: @intro.Title.ToLowerInvariant()</h3>
+            <p>@intro.Description</p>
+            <a class="btn btn-ghost" href="@Url.LessonUrl(intro)">Открыть разбор</a>
+        </li>
+        <li class="example">
+            <h3>Основной: @main.Title.ToLowerInvariant()</h3>
+            <p>@main.Description</p>
+            <a class="btn btn-ghost" href="@Url.LessonUrl(main)">Открыть разбор</a>
+        </li>
+        <li class="example example-error">
+            <h3>Особый случай: ошибки расшифровки</h3>
+            <p>Два типичных сбоя. В первом код в таблице не найден, во втором в конце остался неполный кусок.</p>
+            <p class="example-links">
+                @foreach (Preset s in specials)
+                {
+                    <a class="btn btn-ghost" href="@Url.LessonUrl(s)">@s.Title</a>
+                }
+            </p>
+        </li>
+    </ul>
+</section>
+
+<section aria-labelledby="own">
+    <h2 id="own">Свои данные</h2>
+    <p class="section-note">Введите алфавит и сообщение или строку бит. Разбор построится заново.</p>
+    <div class="sheet"><partial name="_DataForm" model="Model.Form" /></div>
+</section>
+
+<section aria-labelledby="how">
+    <h2 id="how">Как пользоваться</h2>
+    <ol class="howto">
+        <li>Выберите пример или введите свои данные.</li>
+        <li>Нажимайте «Следующий шаг». На каждом шаге написано, что рассматриваем, что делаем, какие значения берём и что изменилось.</li>
+        <li>Отвечайте на вопросы по ходу разбора. Ошибиться не страшно: ответ можно ввести ещё раз.</li>
+        <li>Когда разбор понятен, решите <a asp-controller="Practice" asp-action="Index">задачу самостоятельно</a>.</li>
+    </ol>
+</section>
+
+<section id="sources" aria-labelledby="src">
+    <h2 id="src">Источники и ограничения</h2>
+    <div class="prose">
+        <p>
+            Условие и границы темы взяты из задания проекта «Объясни задачу» (тема 8, вариант А).
+            Примеры и задачи для самостоятельного решения авторские. Теория — школьный курс информатики, раздел «Кодирование информации».
+        </p>
+        <p>
+            Ограничения: алфавит из @CodeTable.MinSymbols–@CodeTable.MaxSymbols разных букв, сообщение не длиннее
+            @InputRules.MaxMessageLength символов, строка бит не длиннее @InputRules.MaxBitsLength бит.
+            Регистр букв и пробелы не важны. Коды одной длины, без сжатия и служебных данных.
+        </p>
+    </div>
+</section>

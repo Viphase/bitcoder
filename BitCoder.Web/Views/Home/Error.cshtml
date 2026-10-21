@@ -1,0 +1,10 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+<section class="sheet notice-page">
+    <p class="big-code" aria-hidden="true">@Model.Code</p>
+    <h1>@Model.Title</h1>
+    <p>@Model.Text</p>
+    <p><a class="btn btn-primary" asp-controller="Home" asp-action="Index">На главную</a></p>
+</section>

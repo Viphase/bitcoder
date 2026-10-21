@@ -1,0 +1,91 @@
+@model PracticeViewModel
+@{
+    ViewData["Title"] = "Задача";
+    PracticeTask task = Model.Task;
+    PracticeResult? result = Model.Result;
+    Preset main = Presets.Main;
+}
+
+<h1>Задача для самостоятельного решения</h1>
+
+<nav class="tabs" aria-label="Выбор задачи">
+    @foreach (PracticeTask t in Model.AllTasks)
+    {
+        <a class="tab" asp-controller="Practice" asp-action="Index" asp-route-id="@t.Id"
+           aria-current="@(t.Id == task.Id ? "page" : null)">Задача @t.Id. @t.Title</a>
+    }
+</nav>
+
+<section class="sheet practice" aria-labelledby="task-title">
+    <h2 id="task-title">Задача @task.Id. @task.Title</h2>
+    <p class="statement">@task.Statement</p>
+
+    <ol class="tiles tiles-plain" aria-label="Алфавит">
+        @for (int i = 0; i < task.Table.Count; i++)
+        {
+            <li class="tile">
+                <span class="tile-sym">@task.Table.Symbols[i]</span>
+                <span class="tile-num">номер @i</span>
+            </li>
+        }
+    </ol>
+
+    @if (task.Mode == Mode.Decode)
+    {
+        <p class="given">Строка бит: <partial name="_Bits" model="task.Input" /></p>
+    }
+
+    <form class="answer" method="get" asp-controller="Practice" asp-action="Index">
+        <input type="hidden" name="id" value="@task.Id" />
+        <label for="ans">Ваш ответ</label>
+        <div class="q-row">
+            <input id="ans" name="ans" value="@Model.Answer" autocomplete="off" spellcheck="false"
+                   placeholder="@(task.Mode == Mode.Encode ? "нули и единицы" : "буквы")" />
+            <button type="submit" class="btn btn-primary">Проверить</button>
+        </div>
+    </form>
+
+    @if (result is not null)
+    {
+        string css = result.Verdict switch
+        {
+            PracticeVerdict.Correct => "pen pen-ok",
+            PracticeVerdict.Wrong => "pen pen-bad",
+            _ => "pen pen-warn",
+        };
+        <div class="@css" role="status">
+            <p class="pen-main">@result.Message</p>
+            @if (result.Details.Count > 0)
+            {
+                <ul class="pen-details">
+                    @foreach (string line in result.Details)
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            }
+
+            @if (result.Verdict == PracticeVerdict.Correct)
+            {
+                <p class="pen-actions">
+                    @{
+                        PracticeTask? next = Model.AllTasks.FirstOrDefault(t => t.Id != task.Id);
+                    }
+                    @if (next is not null)
+                    {
+                        <a class="btn btn-primary" asp-controller="Practice" asp-action="Index" asp-route-id="@next.Id">Другая задача</a>
+                    }
+                    <a class="btn btn-ghost" asp-controller="Practice" asp-action="Index" asp-route-id="@task.Id">Решить заново</a>
+                </p>
+            }
+            else if (result.Verdict == PracticeVerdict.Wrong)
+            {
+                <p class="pen-actions">
+                    <span>Исправьте ответ в поле выше и проверьте ещё раз.</span>
+                    <a class="btn btn-ghost" asp-controller="Practice" asp-action="Index" asp-route-id="@task.Id">Очистить ответ</a>
+                    <a class="btn btn-ghost" href="@Url.LessonUrl(main)">Повторить разбор</a>
+                </p>
+            }
+        </div>
+    }
+</section>

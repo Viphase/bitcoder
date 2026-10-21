@@ -1,0 +1,12 @@
+<Project>
+  <!-- Общие настройки для всех проектов решения.
+       Версия платформы задаётся ТОЛЬКО здесь: если у вас установлен .NET 8 SDK,
+       поменяйте net10.0 на net8.0 (код от этого не меняется). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+</Project>
